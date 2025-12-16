@@ -28,7 +28,8 @@ import {
   Scale,
   DollarSign,
   Activity,
-  MousePointer2
+  MousePointer2,
+  Eye
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -65,6 +66,9 @@ const App: React.FC = () => {
   const [position, setPosition] = useState<Position>(INITIAL_POSITION);
   const [promptCopied, setPromptCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Visual Settings
+  const [visualScale, setVisualScale] = useState({ filament: 0.6, nozzle: 0.5 });
 
   // Simulation State
   const [simPath, setSimPath] = useState<SimulationPath | undefined>(undefined);
@@ -329,6 +333,8 @@ const App: React.FC = () => {
                    angles={angles} 
                    simPath={simPath} 
                    playbackIndex={playbackIndex}
+                   filamentScale={visualScale.filament}
+                   nozzleScale={visualScale.nozzle}
                 />
                 {isParsing && (
                   <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
@@ -643,6 +649,40 @@ const App: React.FC = () => {
                           </button>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- VISUALIZATION SETTINGS (NEW) --- */}
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm opacity-90 mt-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Eye size={18} className="text-pink-500" />
+                    <h3 className="font-semibold text-white">Visual Settings</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                         <span className="text-slate-400">Filament Scale</span>
+                         <span className="text-pink-400 font-mono">{visualScale.filament.toFixed(1)}x</span>
+                      </div>
+                      <input
+                         type="range" min={0.1} max={3.0} step={0.1}
+                         value={visualScale.filament}
+                         onChange={(e) => setVisualScale(prev => ({ ...prev, filament: parseFloat(e.target.value) }))}
+                         className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                         <span className="text-slate-400">Nozzle Scale</span>
+                         <span className="text-pink-400 font-mono">{visualScale.nozzle.toFixed(1)}x</span>
+                      </div>
+                      <input
+                         type="range" min={0.1} max={2.0} step={0.1}
+                         value={visualScale.nozzle}
+                         onChange={(e) => setVisualScale(prev => ({ ...prev, nozzle: parseFloat(e.target.value) }))}
+                         className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                      />
                     </div>
                   </div>
                 </div>

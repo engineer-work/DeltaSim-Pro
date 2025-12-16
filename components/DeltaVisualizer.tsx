@@ -9,9 +9,19 @@ interface DeltaVisualizerProps {
   angles: MotorAngles;
   simPath?: SimulationPath;
   playbackIndex: number;
+  filamentScale?: number;
+  nozzleScale?: number;
 }
 
-const DeltaVisualizer: React.FC<DeltaVisualizerProps> = ({ specs, position, angles, simPath, playbackIndex }) => {
+const DeltaVisualizer: React.FC<DeltaVisualizerProps> = ({ 
+  specs, 
+  position, 
+  angles, 
+  simPath, 
+  playbackIndex,
+  filamentScale = 1.0,
+  nozzleScale = 1.0
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -350,7 +360,6 @@ const DeltaVisualizer: React.FC<DeltaVisualizerProps> = ({ specs, position, angl
 
         // C. RENDER LAYERS (Bottom-Up for correct occlusion)
         // Sort layers by Z (Lowest first)
-        // If camera is looking from below, we might want to reverse, but typically top-down is fine
         layers.sort((a, b) => a.z - b.z);
 
         const outlineColor = '#880022'; // Dark Burgundy
@@ -358,9 +367,9 @@ const DeltaVisualizer: React.FC<DeltaVisualizerProps> = ({ specs, position, angl
         const highlightColor = 'rgba(255, 230, 235, 0.7)';
         const travelColor = 'rgba(14, 165, 233, 0.3)';
 
-        // Widths scaled by zoom
-        const baseWidth = 4.0 * camera.zoom; // Fat lines for solid look
-        const outlineWidth = baseWidth + 1.5; 
+        // Widths scaled by zoom AND filamentScale
+        const baseWidth = (filamentScale * 4.0) * camera.zoom; 
+        const outlineWidth = baseWidth * 1.4; // Proportional outline
         const highlightWidth = baseWidth * 0.4;
 
         layers.forEach(layer => {
@@ -377,7 +386,6 @@ const DeltaVisualizer: React.FC<DeltaVisualizerProps> = ({ specs, position, angl
             ctx.stroke();
 
             // 2. Extrusion - Outline (Depth)
-            // By drawing outline for the whole layer, we merge adjacent lines in the layer
             ctx.beginPath();
             ctx.strokeStyle = outlineColor;
             ctx.lineWidth = outlineWidth;
@@ -412,8 +420,8 @@ const DeltaVisualizer: React.FC<DeltaVisualizerProps> = ({ specs, position, angl
                 ctx.lineWidth = highlightWidth;
                 ctx.lineCap = 'round';
                 // Offset calculation for "Top-Left" lighting
-                const offX = -1.5 * camera.zoom;
-                const offY = -1.5 * camera.zoom;
+                const offX = -1.5 * camera.zoom * filamentScale;
+                const offY = -1.5 * camera.zoom * filamentScale;
                 
                 layer.segments.forEach(seg => {
                     if(!seg.isTravel) {
@@ -563,10 +571,11 @@ const DeltaVisualizer: React.FC<DeltaVisualizerProps> = ({ specs, position, angl
     
     // 9. Nozzle (Yellow Rod) from Wrist to Tip
     const pTip = project(position.x, position.y, position.z);
-    drawLine3D(pWristCenter, pTip, '#fbbf24', 5); 
-    drawPoint3D(pTip, '#fbbf24', 4); // Tip dot
+    // SCALED BY NOZZLE SCALE
+    drawLine3D(pWristCenter, pTip, '#fbbf24', 5 * nozzleScale); 
+    drawPoint3D(pTip, '#fbbf24', 4 * nozzleScale); // Tip dot
 
-  }, [specs, position, angles, camera, simPath, playbackIndex, showGhost, showLighting]);
+  }, [specs, position, angles, camera, simPath, playbackIndex, showGhost, showLighting, filamentScale, nozzleScale]);
 
   return (
     <div 
